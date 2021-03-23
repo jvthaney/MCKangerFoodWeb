@@ -16,21 +16,12 @@ tol21rainbow= c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD"
 
 ######## Read data - 8 Kanger Lake Subset ################
 ####NOTE: Check to make sure you're using the desired MC unit conversion  
-dry15sub8<-read.csv("dry15sub8.csv",header=TRUE)
+kangerMCs<-read.csv("kangerMCs.csv",header=TRUE)
 
 ######## Plotting primary food web figure (Fig 2) #####################
-## Reorder by decreasing Taxon MC
-dec8 <- with(drysum8, reorder(Taxon, -Mean, median,na.rm = TRUE))
-
-## Word wrap the long axis labels
-levels(dec8) <- gsub(" ", "\n", levels(dec))
-
-## Dodge points
-pd = position_dodge(width=0.2)
-
 ## Summary set
 drysum3<-
-  summarise(group_by(dry15sub8,Taxon,Lake),
+  summarise(group_by(kangerMCs,Taxon,Lake),
             Mean=mean(MC.pg.g.dw/1000,na.rm=TRUE),
             sd=sd(MC.pg.g.dw/1000,na.rm=TRUE))
 
@@ -67,7 +58,7 @@ ggsave("aqfw_fig1a.tiff",width=14,height=9,units="in",dpi=450)
 ####### Plot wet weights only #########
 ## Subset snails, Nostoc, Chironomids, Dytiscids
 drysum4<-
-  summarise(group_by(dry15sub8,Taxon,Lake),
+  summarise(group_by(kangerMCs,Taxon,Lake),
             Mean=mean(MC.pg.g.ww/1000,na.rm=TRUE),
             sd=sd(MC.pg.g.ww/1000,na.rm=TRUE))
 wet<-subset(drysum4,Taxon=="Nostoc"|Taxon=="Chironomid larvae"|
@@ -98,52 +89,12 @@ ggsave("FigWetWeights.pdf",FigWetWeights,width=14,height=9,units="in",dpi=600)
 ggsave("FigWetWeights.tiff",FigWetWeights,width=14,height=9,units="in",dpi=450)
 
 
-## Create 8 lake subset
-dry15sub8<-subset(dry15,Lake=="BSL"|Lake=="LSL"|Lake=="HL"|Lake=="STL"|Lake=="LCL"|
-                    Lake=="BCL"|Lake=="LWL"|Lake=="WL",na.rm=TRUE)
-dry15sub8$Lake<-as.factor(dry15sub8$Lake)
-dry15sub8$Lake=as.factor(as.character(dry15sub8$Lake))
-
-levels(dry15sub8$Lake)
-
-##Rename Taxon
-levels(dry15sub8$Taxon)<-c("Chironomid larvae","Dytiscid larvae","Nostoc","Phyto",
-                           "Snails","Zoop")
-
-levels(dry15sub8$Taxon)
-
-
-## Check subset levels & names
-ggplot(dry15sub8,aes(Taxon,MC.pg.g.dw))+geom_point()
-
-
-sum<-summarise(group_by(dry15sub8,Taxon),
-               Median=median((MC.pg.g.dw/1000),na.rm=TRUE),
-               Mean=mean((MC.pg.g.dw/1000),na.rm=TRUE),
-               sd=sd((MC.pg.g.dw/1000),na.rm=TRUE),
-               Max=max(MC.pg.g.dw/1000,na.rm=TRUE),
-               Min=min(MC.pg.g.dw/1000,na.rm=TRUE),
-               N=n())
-
-ggplot(sum,aes(Taxon,Mean))+geom_point()+geom_errorbar(aes(ymax=Mean+sd,ymin=Mean-sd))+
-  scale_y_log10(lim=c(.1,5000))
-
-## Summary set for plotting
-drysum8<-
-  summarise(group_by(dry15sub8,Taxon,Lake),
-            Mean=mean(MC.pg.g.dw/1000,na.rm=TRUE),
-            sd=sd(MC.pg.g.dw/1000,na.rm=TRUE),
-            N=n())
-
-drysum8_2<-
-  summarise(group_by(dry15sub8,Taxon),
-            Mean=mean(MC.pg.g.dw/1000,na.rm=TRUE),
-            sd=sd(MC.pg.g.dw/1000,na.rm=TRUE))
+############ Analyze & plot individual lakes ############
 
 ####### ####### ####### ####
 ####### STL analysis #######
 ####### ####### ####### ####
-STL1<-subset(dry15sub8,Lake=="STL")
+STL1<-subset(kangerMCs,Lake=="STL")
 STL<-subset(STL1,Taxon=="Chironomid larvae"|Taxon=="Dytiscid larvae"|Taxon=="Nostoc"|Taxon=="Phyto"|
               Taxon=="Zoop")
 
@@ -192,7 +143,7 @@ L1<-
 ####### ####### ####### ####
 ####### BCL analysis #######
 ####### ####### ####### ####
-BCL1<-subset(dry15sub8,Lake=="BCL")
+BCL1<-subset(kangerMCs,Lake=="BCL")
 BCL1$Lake<-as.factor(BCL1$Lake)
 BCL<-subset(BCL1,Taxon=="Chironomid larvae"|Taxon=="Dytiscid larvae"|Taxon=="Nostoc"|Taxon=="Phyto"|
               Taxon=="Zoop")
@@ -237,7 +188,7 @@ L2<-
 ####### ####### ####### ####
 ####### BSL analysis #######
 ####### ####### ####### ####
-BSL<-subset(dry15sub8,Lake=="BSL")
+BSL<-subset(kangerMCs,Lake=="BSL")
 
 BSLsum<-summarise(group_by(BSL,Taxon,Lake),
                   Mean=mean(MC.pg.g.dw/1000,na.rm=TRUE),
@@ -278,7 +229,7 @@ L3<-
 ####### ####### ####### ####
 ####### HL analysis #######
 ####### ####### ####### ####
-HL<-subset(dry15sub8,Lake=="HL")
+HL<-subset(kangerMCs,Lake=="HL")
 
 HLsum<-summarise(group_by(HL,Taxon,Lake),
                   Mean=mean(MC.pg.g.dw/1000,na.rm=TRUE),
@@ -319,7 +270,7 @@ L4<-
 ####### ####### ####### ####
 ####### LSL analysis #######
 ####### ####### ####### ####
-LSL<-subset(dry15sub8,Lake=="LSL")
+LSL<-subset(kangerMCs,Lake=="LSL")
 
 LSLsum<-summarise(group_by(LSL,Taxon,Lake),
                   Mean=mean(MC.pg.g.dw/1000,na.rm=TRUE),
@@ -360,7 +311,7 @@ L5<-
 ####### ####### ####### ####
 ####### WL analysis #######
 ####### ####### ####### ####
-WL<-subset(dry15sub8,Lake=="WL")
+WL<-subset(kangerMCs,Lake=="WL")
 
 WLsum<-summarise(group_by(WL,Taxon,Lake),
                   Mean=mean(MC.pg.g.dw/1000,na.rm=TRUE),
@@ -401,7 +352,7 @@ L6<-
 ####### ####### ####### ####
 ####### LWL analysis #######
 ####### ####### ####### ####
-LWL<-subset(dry15sub8,Lake=="LWL")
+LWL<-subset(kangerMCs,Lake=="LWL")
 
 LWLsum<-summarise(group_by(LWL,Taxon,Lake),
                  Mean=mean(MC.pg.g.dw/1000,na.rm=TRUE),
@@ -441,7 +392,7 @@ L7<-
 ####### ####### ####### ####
 ####### LCL analysis #######
 ####### ####### ####### ####
-LCL<-subset(dry15sub8,Lake=="LCL")
+LCL<-subset(kangerMCs,Lake=="LCL")
 
 LCLsum<-summarise(group_by(LCL,Taxon,Lake),
                   Mean=mean(MC.pg.g.dw/1000,na.rm=TRUE),
@@ -487,7 +438,7 @@ lakefigs <- arrangeGrob(L1,L2,L3,L4,L5,L6,L7,L8,nrow=4, ncol=2)
 ggsave("lakefigs.tiff",lakefigs,height=26,width=26,dpi=500)
 ggsave("lakefigs.jpeg",lakefigs,height=26,width=26,dpi=600)
 
-######## Three lake analysis ############
+####################### Three lake analysis #############################
 ## Just lakes for which all taxa are represented
 dry15sub3<-subset(dry15,Lake=="BSL"|Lake=="HL"|Lake=="WL")
 dry15sub3$Lake<-as.factor(dry15sub3$Lake)
@@ -515,7 +466,7 @@ anova(threelakes)
 summary(threelakes)
 
 
-####### Biomagnification factor (BMF) figure #########
+####################### Biomagnification factor (BMF) figure #########################
 ## Read data
 bmfrange<-read.table("BMFrange.txt",header=TRUE)
 
@@ -557,13 +508,9 @@ levels(bmfmolten$Diet)<-c("Equal consumption",
 bmfmolten$Diet=as.factor(as.character(bmfmolten$Diet))
 
 
-################################################################################
-################## BMF Ranges with bars ########################################
-################################################################################
 
-##############################
-######## Separate Taxon ######
-##############################
+################## BMF Ranges with bars 
+######## Separate Taxa
 ## Zooplankton
 zoops<-
   subset(bmfmolten,Taxon=="Zooplankton")
