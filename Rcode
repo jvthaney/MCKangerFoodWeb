@@ -6,7 +6,6 @@ mycolors=c("#332288","#88CCEE","#44AA99","#117733",
 mycolors2=c("#4477AA","#228833","#EE6677","#CCBB44",
             "#AA3377","#BBBBBB","#EE8866","#FFAABB","#AAAA00","#99DDFF")
 
-
 # Paul tol's 21 color rainbow
 tol14rainbow=c("#882E72", "#B178A6", "#D6C1DE", "#1965B0", "#5289C7", "#7BAFDE", "#4EB265", "#90C987", "#CAE0AB", "#F7EE55", "#F6C141", "#F1932D", "#E8601C", "#DC050C")
 tol15rainbow=c("#114477", "#4477AA", "#77AADD", "#117755", "#44AA88", "#99CCBB", "#777711", "#AAAA44", "#DDDD77", "#771111", "#AA4444", "#DD7777", "#771144", "#AA4477", "#DD77AA")
@@ -15,75 +14,11 @@ tol18rainbow=c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD",
 tol21rainbow= c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD", "#117777", "#44AAAA", "#77CCCC", "#117744", "#44AA77", "#88CCAA", "#777711", "#AAAA44", "#DDDD77", "#774411", "#AA7744", "#DDAA77", "#771122", "#AA4455", "#DD7788")
 
 
+######## Read data - 8 Kanger Lake Subset ################
+####NOTE: Check to make sure you're using the desired MC unit conversion  
+dry15sub8<-read.csv("dry15sub8.csv",header=TRUE)
 
-####### Read data #######
-Dry<-read.csv("aqFW_dry.csv",header=TRUE)
-
-##################################################
-############# 2015 Only ##########################
-##################################################
-##NOTE: phyto in 2015 = total phyto
-dry15<-subset(Dry,Year==2015)
-levels(dry15$Taxon)
-
-## Subset of Taxa
-dry15<-subset(dry15,Taxon=="chiron"|Taxon=="dytis"|Taxon=="nost"|Taxon=="phyto"|
-                Taxon=="snail"|Taxon=="zoop")
-
-dry15$Taxon<-as.factor(dry15$Taxon)
-dry15$Taxon=as.factor(as.character(dry15$Taxon))
-
-### Check subset levels
-levels(dry15$Taxon)
-ggplot(dry15,aes(Taxon,MC.pg.g.dw))+geom_point()
-
-
-##########################################################################################
-################## 8 Lake Subset #########################################################
-##########################################################################################
-####NOTE: Check to make sure you're using the desired conversion factor 
-
-## Create 8 lake subset
-dry15sub8<-subset(dry15,Lake=="BSL"|Lake=="LSL"|Lake=="HL"|Lake=="STL"|Lake=="LCL"|
-                    Lake=="BCL"|Lake=="LWL"|Lake=="WL")
-dry15sub8$Lake<-as.factor(dry15sub8$Lake)
-dry15sub8$Lake=as.factor(as.character(dry15sub8$Lake))
-
-levels(dry15sub8$Lake)
-
-##Rename Taxon
-levels(dry15sub8$Taxon)<-c("Chironomid larvae","Dytiscid larvae","Nostoc","Phytoplankton",
-                           "Snails","Zooplankton")
-
-## Check subset levels & names
-ggplot(dry15sub8,aes(Taxon,MC.pg.g.dw))+geom_point()
-
-
-sum<-summarise(group_by(dry15sub8,Taxon),
-          Median=median(MC.pg.g.dw/1000,na.rm=TRUE),
-          Mean=mean(MC.pg.g.dw/1000,na.rm=TRUE),
-          sd=sd(MC.pg.g.dw/1000,na.rm=TRUE),
-          Max=max(MC.pg.g.dw/1000,na.rm=TRUE),
-          Min=min(MC.pg.g.dw/1000,na.rm=TRUE))
-
-## Summary set for plotting
-drysum8<-
-  summarise(group_by(dry15sub8,Taxon,Lake),
-            Mean=mean(MC.pg.g.dw/1000,na.rm=TRUE),
-            sd=sd(MC.pg.g.dw/1000,na.rm=TRUE),
-            N=n())
-
-drysum8_2<-
-  summarise(group_by(dry15sub8,Taxon),
-            Mean=mean(MC.pg.g.dw/1000,na.rm=TRUE),
-            sd=sd(MC.pg.g.dw/1000,na.rm=TRUE))
-
-#######################################################################
-#######################################################################
-############# Primary aquatic food web figure #########################
-#######################################################################
-#######################################################################
-
+######## Plotting primary food web figure (Fig 2) #####################
 ## Reorder by decreasing Taxon MC
 dec8 <- with(drysum8, reorder(Taxon, -Mean, median,na.rm = TRUE))
 
@@ -93,118 +28,7 @@ levels(dec8) <- gsub(" ", "\n", levels(dec))
 ## Dodge points
 pd = position_dodge(width=0.2)
 
-######################################################
-## Plot with Brewer color palette and manual shapes ##
-######################################################
-aqfw_fig1_8lakes<-
-  ggplot(drysum8,aes(dec8,Mean,color=Lake,shape=Lake))+theme_classic()+
-  geom_point(size=5,position=pd)+
-  geom_errorbar(aes(ymax=Mean + sd,ymin=Mean-sd),width=0.2,position=pd)+
-  stat_summary(fun.y=median, colour='black', geom='point', shape='-', size=20)+
-  theme(axis.title=element_text(size=22),axis.text.x=element_text(size=18),
-        axis.text.y=element_text(size=22),legend.text=element_text(size=22),
-        legend.title=element_text(size=22))+
-  scale_shape_manual(values=c(19,15,17,18,15,16,17,16,18))+
-  scale_color_brewer(palette="Paired")+
-  scale_y_log10(breaks=c(.1,1,10,100,500,1000,5000),labels=comma)+
-  annotation_logticks(sides = "l")+
-  labs(x="",y=expression(paste("Microcystin (ng g"^"-1"*" dw)")))
-
-ggsave("aqfw_fig1_8lakes.pdf",width=14,height=9,units="in",dpi=600)
-ggsave("aqfw_fig1_8lakes.tiff",width=14,height=9,units="in",dpi=400)
-
-##To add horizontal lines:
-# under theme() use: panel.grid.major.y = element_line(colour="black", size = (.5),linetype="dotted"), 
-
-##########################################################
-################     BMF - 8 LAKES  ######################
-##########################################################
-aqbmf<-read.table("AqDryBMF.txt",header=TRUE)
-
-## Create subset with 8 lakes 
-bmf8<-subset(aqbmf,Lake=="BSL"|Lake=="LSL"|Lake=="HL"|Lake=="STL"|Lake=="LCL"|
-                    Lake=="BCL"|Lake=="LWL"|Lake=="WL")
-bmf8$Lake<-as.factor(bmf8$Lake)
-bmf8$Lake=as.factor(as.character(bmf8$Lake))
-levels(bmf8$Lake)
-
-## Rename the taxa
-levels(bmf8$Taxon)
-levels(bmf8$Taxon)<-c("Chironomid larvae","Dytiscid larvae","Snails","Zooplankton")
-bmf8$Taxon<-factor(bmf8$Taxon,
-                    levels=c("Zooplankton","Snails","Chironomid larvae","Dytiscid larvae"))
-
-## Word wrap the long axis labels
-levels(bmf8$Taxon) <- gsub(" ", "\n", levels(bmf8$Taxon))
-
-## Plot by decreasing Taxon BMF
-decbmf8 <- with(bmf8, reorder(Taxon, -BMF, median,na.rm = TRUE))
-
-
-## Plot with reference line = 1
-bmf8lakes<-
-  ggplot(bmf8,aes(Taxon,BMF,color=Lake,shape=Lake))+geom_point(size=6)+theme_classic()+
-  scale_y_continuous(limits=c(0,1.2))+labs(x="",y="Biomagnification Factor (BMF)")+
-  stat_summary(fun.y=median, colour='black', geom='point', shape='-', size=20)+
-  theme(axis.title=element_text(size=25),axis.text.x=element_text(size=25),
-        axis.text.y=element_text(size=22,margin=margin(l=10)),
-        legend.text=element_text(size=25),
-        legend.title=element_text(size=25))+geom_hline(yintercept=1,linetype="dashed")+
-  scale_shape_manual(values=c(19,15,17,18,15,16,17,16,18))+
-  scale_color_brewer(palette="Paired")
-
-ggsave("bmf8lakes.pdf",width=14,height=9,units="in",dpi=600)
-ggsave("bmf8lakes.tiff",width=14,height=9,units="in",dpi=400)
-
-
-##########################################################################################
-################## 9 Lake Subset #########################################################
-##########################################################################################
-####NOTE: Check to make sure you're using the desired conversion factor 
-
-## Create 9 lake subset
-dry15sub9<-subset(dry15,Lake=="BSL"|Lake=="LSL"|Lake=="TSL"|Lake=="HL"|Lake=="STL"|Lake=="LCL"|
-                  Lake=="BCL"|Lake=="LWL"|Lake=="WL")
-dry15sub9$Lake<-as.factor(dry15sub9$Lake)
-dry15sub9$Lake=as.factor(as.character(dry15sub9$Lake))
-
-levels(dry15sub9$Lake)
-
-##Rename Taxon
-levels(dry15sub9$Taxon)<-c("Chironomid larvae","Dytiscid larvae","Nostoc","Phytoplankton",
-                         "Snails","Zooplankton")
-
-## Check subset levels & names
-ggplot(dry15sub9,aes(Taxon,MC.pg.g.dw))+geom_point()
-
-
-  summarise(group_by(dry15sub9,Taxon),
-          Median=median(MC.pg.g.dw/1000,na.rm=TRUE),
-          Mean=mean(MC.pg.g.dw/1000,na.rm=TRUE),
-          sd=sd(MC.pg.g.dw/1000,na.rm=TRUE),
-          Max=max(MC.pg.g.dw/1000,na.rm=TRUE),
-          Min=min(MC.pg.g.dw/1000,na.rm=TRUE))
-
-## Summary set for plotting
-drysum<-
-  summarise(group_by(dry15sub9,Taxon,Lake),
-            Mean=mean(MC.pg.g.dw/1000,na.rm=TRUE),
-            sd=sd(MC.pg.g.dw/1000,na.rm=TRUE),
-            N=n())
-
-drysum2<-
-  summarise(group_by(dry15sub9,Taxon),
-            Mean=mean(MC.pg.g.dw/1000,na.rm=TRUE),
-            sd=sd(MC.pg.g.dw/1000,na.rm=TRUE))
-
-
-
-
-#######################################################################
-#######################################################################
-############# Primary aquatic food web figure #########################
-#######################################################################
-#######################################################################
+## Summary set
 drysum3<-
   summarise(group_by(dry15sub8,Taxon,Lake),
             Mean=mean(MC.pg.g.dw/1000,na.rm=TRUE),
@@ -220,19 +44,11 @@ levels(dec) <- gsub(" ", "\n", levels(dec))
 ## Dodge points
 pd = position_dodge(width=0.2)
 
-#####################################################################################
-## Plot with Brewer color palette and manual shapes - used in Ecosphere manuscript ##
-#####################################################################################
-
-## Redefinte error bar limits when <0 to allow them to be plotted on log Y axis
-drysum3$minerror<-drysum3$Mean-drysum3$sd
-drysum3$nonzerosd<-drysum3$minerror
-drysum3$nonzerosd[drysum3$minerror<=0]<-.1
-
+## Plot
 aqfw_fig1a<-
   ggplot(drysum3,aes(dec,Mean,color=Lake,shape=Lake))+theme_classic()+
   geom_point(size=6,position=pd)+
-  geom_errorbar(aes(ymax=Mean + sd,ymin=nonzerosd),width=0.8,position=pd)+
+  geom_errorbar(aes(ymax=Mean + sd,ymin=pmax(Mean-sd,0)),width=0.8,position=pd)+
   stat_summary(fun.y=median,colour='black', geom='point',shape='-',size=35)+
   theme(axis.title=element_text(size=22),axis.text.x=element_text(size=18),
         axis.text.y=element_text(size=22),legend.text=element_text(size=22),
@@ -240,52 +56,20 @@ aqfw_fig1a<-
   scale_shape_manual(values=c(19,15,17,18,15,16,17,16))+
   #scale_color_manual(values=mycolors)+
   scale_color_brewer(palette="Paired")+
-  scale_y_log10(breaks=c(1,10,100,500,1000,5000),labels=comma,lim=c(.1,5000))+
+  scale_y_log10(labels=comma_format(big.mark=",",decimal.mark = ".",accuracy=.1),
+                breaks=c(.1,1,10,100,1000,5000))+
   annotation_logticks(sides = "l")+
   labs(x="",y=expression(paste("Microcystin (ng g"^"-1"*" dw)")))
 
 ggsave("aqfw_fig1a.pdf",width=14,height=9,units="in",dpi=600)
-ggsave("aqfw_fig1a.tiff",width=14,height=9,units="in",dpi=400)
+ggsave("aqfw_fig1a.tiff",width=14,height=9,units="in",dpi=450)
 
-##To add horizontal lines:
-# under theme() use: panel.grid.major.y = element_line(colour="black", size = (.5),linetype="dotted"), 
-
-
-
-######################################################
-## Plot with manual color palette and manual shapes ##
-######################################################
-aqfw_fig1b<-
-  ggplot(drysum,aes(dec,Mean,color=Lake,shape=Lake))+theme_classic()+
-  geom_point(size=5,position=pd)+
-  geom_errorbar(aes(ymax=Mean + sd,ymin=Mean-sd),width=0.2,position=pd)+
-  stat_summary(fun.y=median, colour='black', geom='point', shape='-', size=20)+
-  theme(panel.grid.major.y = element_line(colour="black", size = (.5),linetype="dotted"),
-        axis.title=element_text(size=20),axis.text.x=element_text(size=18),
-        axis.text.y=element_text(size=14),legend.text=element_text(size=19),
-        legend.title=element_text(size=20))+
-  scale_shape_manual(values=c(19,15,17,18,15,16,17,16,18))+
-  scale_color_manual(values=c("sienna4","palevioletred3","steelblue3","ivory4","yellow3",
-                              "mediumpurple3","palegreen4","mediumvioletred","tomato"))+
-  scale_y_log10(breaks=c(.1,1,10,100,500,1000,5000),labels=comma)+
-  annotation_logticks(sides = "l")+
-  labs(x="",y=expression(paste("Microcystin (ng g"^"-1"*" dw)")))
-
-
-## Save plot
-ggsave("aqfw_fig1b.pdf", width=14,height=9,units="in",dpi=600)
-
-
-################################################### 
-############# Plot Wet Weights only ###############
-###################################################
+####### Plot wet weights only #########
 ## Subset snails, Nostoc, Chironomids, Dytiscids
 drysum4<-
   summarise(group_by(dry15sub8,Taxon,Lake),
             Mean=mean(MC.pg.g.ww/1000,na.rm=TRUE),
             sd=sd(MC.pg.g.ww/1000,na.rm=TRUE))
-
-
 wet<-subset(drysum4,Taxon=="Nostoc"|Taxon=="Chironomid larvae"|
               Taxon=="Snails"|Taxon=="Dytiscid larvae")
 
@@ -293,16 +77,11 @@ dec2 <- with(wet, reorder(Taxon, -Mean, mean,na.rm=TRUE))
 
 levels(dec2) <- gsub(" ", "\n", levels(dec2))
 
-## Redefinte error bar limits when <0 to allow them to be plotted on log Y axis
-wet$minerror<-wet$Mean-wet$sd
-wet$nonzerosd<-wet$minerror
-wet$nonzerosd[wet$minerror<=0]<-.1
-
-
+## Plot
 FigWetWeights<-
 ggplot(wet,aes(dec2,Mean,color=Lake,shape=Lake))+theme_classic()+
   geom_point(size=6,position=pd)+
-  geom_errorbar(aes(ymax=Mean+sd,ymin=nonzerosd),width=.8,position=position_dodge(width=.2))+
+  geom_errorbar(aes(ymax=Mean+sd,ymin=pmax(Mean-sd,0)),width=.8,position=position_dodge(width=.2))+
   stat_summary(fun.y=median, colour='black', geom='point', shape='-', size=35)+
   theme(axis.title=element_text(size=22),axis.text.x=element_text(size=18),
         axis.text.y=element_text(size=22),legend.text=element_text(size=22),
@@ -316,100 +95,8 @@ ggplot(wet,aes(dec2,Mean,color=Lake,shape=Lake))+theme_classic()+
   labs(x="",y=expression(paste("Microcystin (ng g"^"-1"*" ww)")))
 
 ggsave("FigWetWeights.pdf",FigWetWeights,width=14,height=9,units="in",dpi=600)
-ggsave("FigWetWeights.tiff",FigWetWeights,width=14,height=9,units="in",dpi=400)
+ggsave("FigWetWeights.tiff",FigWetWeights,width=14,height=9,units="in",dpi=450)
 
-
-
-#FigWetWeights<-
-  ggplot(wet,aes(dec2,Mean,color=Lake,shape=Lake))+theme_classic()+
-  geom_point(size=6,position=pd)+
-  geom_errorbar(aes(ymax=Mean + sd,ymin=Mean-sd),width=0.5,position=position_dodge(width=.2))+
-  stat_summary(fun.y=median, colour='black', geom='point', shape='-', size=20)+
-  theme(axis.title=element_text(size=22),axis.text.x=element_text(size=18),
-        axis.text.y=element_text(size=22),legend.text=element_text(size=22),
-        legend.title=element_text(size=22))+
-  scale_shape_manual(values=c(19,15,17,18,15,16,17,16))+
-  #scale_color_manual(values=mycolors)+
-  scale_color_brewer(palette="Paired")+
-  coord_trans(y="log10")+
-  #scale_y_log10(breaks=c(1,10,100,500),lim=c(.05,500),labels=comma)+
-  #annotation_logticks(sides = "l")+
-  labs(x="",y=expression(paste("Microcystin (ng g"^"-1"*" ww)")))
-
-#ggsave("FigWetWeights.pdf",FigWetWeights,width=14,height=9,units="in",dpi=600)
-#ggsave("FigWetWeights.tiff",FigWetWeights,width=14,height=9,units="in",dpi=400)
-
-
-
-##########################################################
-################     BMF - 9 LAKES  ######################
-##########################################################
-aqbmf<-read.table("AqDryBMF.txt",header=TRUE)
-
-levels(aqbmf$Taxon)
-levels(aqbmf$Taxon)<-c("Chironomid larvae","Dytiscid larvae","Snails","Zooplankton")
-aqbmf$Taxon<-factor(aqbmf$Taxon,
-                    levels=c("Zooplankton","Snails","Chironomid larvae","Dytiscid larvae"))
-
-## Word wrap the long axis labels
-levels(aqbmf$Taxon) <- gsub(" ", "\n", levels(aqbmf$Taxon))
-
-## Plot by decreasing Taxon BMF
-decbmf <- with(aqbmf, reorder(Taxon, -BMF, median,na.rm = TRUE))
-
-
-## Plot with reference line = 1
-bmf1<-
-  ggplot(aqbmf,aes(Taxon,BMF,color=Lake,shape=Lake))+geom_point(size=6)+theme_classic()+
-  scale_y_continuous(limits=c(0,1.2))+labs(x="",y="Biomagnification Factor (BMF)")+
-  stat_summary(fun.y=median, colour='black', geom='point', shape='-', size=20)+
-  theme(axis.title=element_text(size=25),axis.text.x=element_text(size=25),
-        axis.text.y=element_text(size=22,margin=margin(l=10)),
-        legend.text=element_text(size=25),
-        legend.title=element_text(size=25))+geom_hline(yintercept=1)+
-  scale_shape_manual(values=c(19,15,17,18,15,16,17,16,18))+
-  scale_color_brewer(palette="Paired")
-  
-ggsave("bmf1.pdf",width=14,height=9,units="in",dpi=600)
-ggsave("bmf1.tiff",width=14,height=9,units="in",dpi=400)
-
-
-#######################################
-######## Making BMF table for pub #####
-#######################################
-library(reshape2)
-
-head(aqbmf)
-
-bmftable<-
-  dcast(aqbmf,Lake~Taxon,value.var = "BMF")
-
-bmftable
-
-summarise(group_by(aqbmf,Taxon),med=median(BMF,na.rm=TRUE))
-
-
-
-
-
-
-
-
-
-######### Snails in lakes with and without Nostoc ###############
-snails<-read.table("SnailsNostoc.txt",header = TRUE)
-
-library(MASS)
-
-snails2<-dcast(snails,Lake+Taxon+Type~Nostoc,fun.aggregate = mean,na.rm=TRUE)
-
-
-wilcox.test(snails2$NO, snails2$YES, paired=FALSE)
-
-
-####################################################################
-######## Individual lake analysis - for Ecosphere resubmission #####
-####################################################################
 
 ## Create 8 lake subset
 dry15sub8<-subset(dry15,Lake=="BSL"|Lake=="LSL"|Lake=="HL"|Lake=="STL"|Lake=="LCL"|
@@ -498,7 +185,7 @@ L1<-
         legend.title=element_text(size=22),
         plot.title = element_text(size=30))+
   scale_shape_manual(values=c(19,15,17,18,15,16,17,16,18))+
-  scale_y_log10(breaks=c(.1,1,10,100,500,1000,5000),lim=c(.1,5000),labels=comma)+
+  scale_y_log10(breaks=c(.1,1,10,100,1000,5000),lim=c(.1,5000),labels=comma)+
   annotation_logticks(sides = "l")+
   labs(title="STL",x="",y=expression(paste("Microcystin (ng g"^"-1"*" dw)")))
   
@@ -542,7 +229,7 @@ L2<-
         legend.title=element_text(size=22),
         plot.title = element_text(size=30))+
   scale_shape_manual(values=c(19,15,17,18,15,16,17,16,18))+
-  scale_y_log10(breaks=c(.1,1,10,100,500,1000,5000),lim=c(.1,5000),labels=comma)+
+  scale_y_log10(breaks=c(.1,1,10,100,1000,5000),lim=c(.1,5000),labels=comma)+
   annotation_logticks(sides = "l")+
   labs(title="BCL",x="",y="")
 
@@ -583,7 +270,7 @@ L3<-
         legend.title=element_text(size=22),
         plot.title = element_text(size=30))+
   scale_shape_manual(values=c(19,15,17,18,15,16,17,16,18))+
-  scale_y_log10(breaks=c(-.1,.1,1,10,100,500,1000,5000),lim=c(.1,5000),labels=comma)+
+  scale_y_log10(breaks=c(-.1,.1,1,10,100,1000,5000),lim=c(.1,5000),labels=comma)+
   annotation_logticks(sides = "l")+
   labs(title="BSL",x="",y=expression(paste("Microcystin (ng g"^"-1"*" dw)")))
 
@@ -624,7 +311,7 @@ L4<-
         legend.title=element_text(size=22),
         plot.title = element_text(size=30))+
   scale_shape_manual(values=c(19,15,17,18,15,16,17,16,18))+
-  scale_y_log10(breaks=c(.1,1,10,100,500,1000,5000),lim=c(.1,5000),labels=comma)+
+  scale_y_log10(breaks=c(.1,1,10,100,1000,5000),lim=c(.1,5000),labels=comma)+
   annotation_logticks(sides = "l")+
   labs(title="HL",x="",y="")
 
@@ -665,7 +352,7 @@ L5<-
         legend.title=element_text(size=22),
         plot.title = element_text(size=30))+
   scale_shape_manual(values=c(19,15,17,18,15,16,17,16,18))+
-  scale_y_log10(breaks=c(.1,1,10,100,500,1000,5000),lim=c(.1,5000),labels=comma)+
+  scale_y_log10(breaks=c(.1,1,10,100,1000,5000),lim=c(.1,5000),labels=comma)+
   annotation_logticks(sides = "l")+
   labs(title="LSL",x="",y=expression(paste("Microcystin (ng g"^"-1"*" dw)")))
 
@@ -706,7 +393,7 @@ L6<-
         legend.title=element_text(size=22),
         plot.title = element_text(size=30))+
   scale_shape_manual(values=c(19,15,17,18,15,16,17,16,18))+
-  scale_y_log10(breaks=c(.1,1,10,100,500,1000,5000),lim=c(.1,5000),labels=comma)+
+  scale_y_log10(breaks=c(.1,1,10,100,1000,5000),lim=c(.1,5000),labels=comma)+
   annotation_logticks(sides = "l")+
   labs(title="WL",x="",y="")
 
@@ -747,7 +434,7 @@ L7<-
         legend.title=element_text(size=22),
         plot.title = element_text(size=30))+
   scale_shape_manual(values=c(19,15,17,18,15,16,17,16,18))+
-  scale_y_log10(breaks=c(.1,1,10,100,500,1000,5000),lim=c(.1,5000),labels=comma)+
+  scale_y_log10(breaks=c(.1,1,10,100,1000,5000),lim=c(.1,5000),labels=comma)+
   annotation_logticks(sides = "l")+
   labs(title="LWL",x="",y=expression(paste("Microcystin (ng g"^"-1"*" dw)")))
 
@@ -789,78 +476,22 @@ L8<-
         legend.title=element_text(size=22),
         plot.title = element_text(size=30))+
   scale_shape_manual(values=c(19,15,17,18,15,16,17,16,18))+
-  scale_y_log10(breaks=c(.1,1,10,100,500,1000,5000),lim=c(.1,5000),labels=comma)+
+  scale_y_log10(breaks=c(.1,1,10,100,1000,5000),lim=c(.1,5000),labels=comma)+
   annotation_logticks(sides = "l")+
   labs(title="LCL",x="",y="")
 
 
-##############################
-### Arrange figs together ####
-##############################
-
+##### Arrange figs together ######
 lakefigs <- arrangeGrob(L1,L2,L3,L4,L5,L6,L7,L8,nrow=4, ncol=2)
 
 ggsave("lakefigs.tiff",lakefigs,height=26,width=26,dpi=500)
 ggsave("lakefigs.jpeg",lakefigs,height=26,width=26,dpi=600)
 
-
-################################
-### Arrange tables together ####
-################################
-
-
-table1<-
-  as.data.frame(t1$p.value)
-table1$Lake<-"STL"
-
-table2<-
-  as.data.frame(t2$p.value)
-table2$Lake<-"BCL"
-
-table3<-
-  as.data.frame(t3$p.value)
-table3$Lake<-"BSL"
-
-table4<-
-  as.data.frame(t4$p.value)
-table4$Lake<-"HL"
-
-table5<-
-  as.data.frame(t5$p.value)
-table5$Lake<-"LSL"
-
-table6<-
-  as.data.frame(t6$p.value)
-table6$Lake<-"WL"
-
-table7<-
-  as.data.frame(t7$p.value)
-table7$Lake<-"LWL"
-
-table8<-
-  as.data.frame(t8$p.value)
-table8$Lake<-"LCL"
-
-## Export pairwise p value tables from each lake
-write.table(table1,"table1.csv",sep=",",col.names=NA)
-write.table(table2,"table2.csv",sep=",",col.names=NA)
-write.table(table3,"table3.csv",sep=",",col.names=NA)
-write.table(table4,"table4.csv",sep=",",col.names=NA)
-write.table(table5,"table5.csv",sep=",",col.names=NA)
-write.table(table6,"table6.csv",sep=",",col.names=NA)
-write.table(table7,"table7.csv",sep=",",col.names=NA)
-write.table(table8,"table8.csv",sep=",",col.names=NA)
-
-
-####################################
-######## 3 lake analysis ###########
-####################################
-
-## Create 8 lake subset
+######## Three lake analysis ############
+## Just lakes for which all taxa are represented
 dry15sub3<-subset(dry15,Lake=="BSL"|Lake=="HL"|Lake=="WL")
 dry15sub3$Lake<-as.factor(dry15sub3$Lake)
 dry15sub3$Lake=as.factor(as.character(dry15sub3$Lake))
-
 levels(dry15sub3$Lake)
 
 ##Rename Taxon
@@ -869,7 +500,6 @@ levels(dry15sub3$Taxon)<-c("Chironomid larvae","Dytiscid larvae","Nostoc","Phyto
 
 ## Check subset levels & names
 ggplot(dry15sub3,aes(Taxon,MC.pg.g.dw))+geom_point()
-
 
 sum<-summarise(group_by(dry15sub3,Taxon),
                Median=median(MC.pg.g.dw/1000,na.rm=TRUE),
@@ -883,3 +513,175 @@ sum<-summarise(group_by(dry15sub3,Taxon),
 threelakes<-lm(log10(MC.pg.g.dw)~Taxon+Lake+Taxon*Lake,data=dry15sub3)
 anova(threelakes)
 summary(threelakes)
+
+
+####### Biomagnification factor (BMF) figure #########
+## Read data
+bmfrange<-read.table("BMFrange.txt",header=TRUE)
+
+## Subset without TSL
+levels(bmfrange$Lake)
+bmfrange_noTSL<-subset(bmfrange,Lake=="BCL"|Lake=="BSL"|Lake=="HL"|Lake=="LCL"|Lake=="LSL"|Lake=="LWL"|
+                         Lake=="STL"|Lake=="WL")
+## Rearrange columns
+bmfmolten<-
+  melt(bmfrange_noTSL,id.variables=c("Taxon","Lake"),
+     variable.name = "Diet",
+     value.name = "BMF")
+
+
+## Rename Taxa
+bmfmolten$Taxon<-as.factor(bmfmolten$Taxon)
+levels(bmfmolten$Taxon)
+levels(bmfmolten$Taxon)<-c("Chironomid larvae","Dytiscid larvae","Snails","Zooplankton")
+bmfmolten$Taxon<-factor(bmfmolten$Taxon,
+                   levels=c("Chironomid larvae","Dytiscid larvae","Snails","Zooplankton"))
+levels(bmfmolten$Taxon)
+
+## Rename Diet options
+bmfmolten$Diet<-as.factor(bmfmolten$Diet)
+levels(bmfmolten$Diet)
+levels(bmfmolten$Diet)<-c("Equal consumption",
+                          "1% phyto, 49.5% Nostoc, 49.5% zoop",
+                          "1% Nostoc, 49.5% phyto, 49.5% zoop",
+                          "1% zoop, 49.5% Nostoc, 49.5% phyto",
+                          "1% zoop, 99% Chiron larvae",
+                          "1% Chiron larvae, 99% zoop",
+                          "1% phyto, 99% Nostoc",
+                          "1% Nostoc, 99% phyto",
+                          "100% Phytoplankton",
+                          "100% Nostoc",
+                          "100% Zooplankton",
+                          "100% Chironomid larvae")
+
+bmfmolten$Diet=as.factor(as.character(bmfmolten$Diet))
+
+
+################################################################################
+################## BMF Ranges with bars ########################################
+################################################################################
+
+##############################
+######## Separate Taxon ######
+##############################
+## Zooplankton
+zoops<-
+  subset(bmfmolten,Taxon=="Zooplankton")
+zoops2<-
+  subset(zoops,Diet=="100% Phytoplankton")
+
+
+zoopplot<-
+  ggplot(zoops2,aes(Lake,BMF,shape=Diet))+theme_classic()+geom_point(size=5)+
+  theme(axis.title=element_text(size=22),axis.text.x=element_text(angle=300,size=18),
+        axis.text.y=element_text(size=18,margin=margin(l=10)),
+        legend.text=element_text(size=16),
+        plot.title = element_text(size=22),
+        legend.box.background = element_rect(color="white", size=1.5),
+        legend.title=element_text(size=16),
+        legend.position = c(.99,1.1),
+        legend.justification = c("right", "top"),
+        legend.box.just = "left",
+        legend.key.size = unit(.5, 'cm'),
+        plot.margin = unit(c(1,.2,.2,1), "cm"))+
+  labs(x="",y=expression(paste("Biomagnification factor")),title = "Zooplankton",shape="Diet composition")+
+  scale_shape_manual(values=c(19))+
+  annotation_logticks(sides = "l")+
+  scale_y_log10(breaks=c(0.01,0.1,1,10,100),limits=c(.002,100),
+                labels=scales::number_format(accuracy = 0.01))+
+  geom_hline(yintercept=1,linetype="dashed")
+
+## Snails
+snails<-
+  subset(bmfmolten,Diet=="100% Nostoc"|Diet=="100% Phytoplankton"|
+           Diet=="Equal consumption")
+snails2<-
+  subset(snails,Taxon=="Snails")
+
+snailplot<-
+  ggplot(snails2,aes(Lake,BMF,shape=Diet))+
+  theme_classic()+geom_point(size=3.5, fill="black")+geom_line(aes(group = Lake),show.legend = FALSE)+
+  theme(axis.title=element_text(size=22),axis.text.x=element_text(angle=300,size=18),
+        axis.text.y=element_text(size=18,margin=margin(l=10)),
+        legend.text=element_text(size=16),
+        plot.title = element_text(size=22),
+        legend.box.background = element_rect(color="white", size=1.5),
+        legend.title=element_text(size=16),
+        legend.position = c(.99,1.1),
+        legend.justification = c("right", "top"),
+        legend.box.just = "left",
+        legend.key.size = unit(.5, 'cm'),
+        plot.margin = unit(c(1,1,.2,.2), "cm"))+
+  labs(x="",y=expression(paste("")),title = "Snails",shape="Diet composition")+
+  scale_shape_manual(values=c(25,17,19))+
+  annotation_logticks(sides = "l")+
+  scale_y_log10(breaks=c(0.01,0.1,1,10,100),limits=c(.002,100),
+                labels=scales::number_format(accuracy = 0.01))+
+  geom_hline(yintercept=1,linetype="dashed")
+
+
+## Chrionomid larvae
+chir<-
+  subset(bmfmolten,Diet=="100% Zooplankton"|Diet=="100% Nostoc"|
+           Diet=="100% Phytoplankton"|Diet=="Equal consumption")
+chir2<-
+  subset(chir,Taxon=="Chironomid larvae")
+
+chirplot<-
+  ggplot(chir2,aes(Lake,BMF,shape=Diet))+
+  theme_classic()+geom_point(size=3.5, fill="black")+geom_line(aes(group = Lake),show.legend = FALSE)+
+  theme(axis.title=element_text(size=22),axis.text.x=element_text(angle=300,size=16,margin=margin(b=10)),
+        axis.text.y=element_text(size=18,margin=margin(l=10)),
+        legend.text=element_text(size=16),
+        plot.title = element_text(size=22),
+        legend.box.background = element_rect(color="white", size=1.5),
+        legend.title=element_text(size=16),
+        legend.position = c(.99,1.1),
+        legend.justification = c("right", "top"),
+        legend.box.just = "left",
+        legend.key.size = unit(.5, 'cm'),
+        plot.margin = unit(c(.2,.2,1,1), "cm"))+
+  guides(color = guide_legend(override.aes = list(size=2)))+
+  labs(x="Lake",y=expression(paste("Biomagnification factor")),title = "Chironomid larvae",
+       color="Range of diet compositions",shape="Diet composition")+
+  scale_shape_manual(values=c(25,17,18,19))+
+  annotation_logticks(sides = "l")+
+  scale_y_log10(breaks=c(0.01,0.1,1,10,100),limits=c(.002,100),
+                labels=scales::number_format(accuracy = 0.01))+
+  geom_hline(yintercept=1,linetype="dashed")
+
+## Dytiscid larvae
+dyt<-
+  subset(bmfmolten,Diet=="100% Chironomid larvae"|Diet=="100% Zooplankton"|
+           Diet=="Equal consumption")
+dyt2<-
+  subset(dyt,Taxon=="Dytiscid larvae")
+
+dytplot<-
+  ggplot(dyt2,aes(Lake,BMF,shape=Diet))+
+  theme_classic()+geom_point(size=3.5, fill="black")+geom_line(aes(group = Lake),show.legend = FALSE)+
+  theme(axis.title=element_text(size=22),axis.text.x=element_text(angle=300,size=16,margin=margin(b=10)),
+        axis.text.y=element_text(size=18,margin=margin(l=10)),
+        legend.text=element_text(size=16),
+        plot.title = element_text(size=22),
+        legend.box.background = element_rect(color="white", size=1.5),
+        legend.title=element_text(size=16),
+        legend.position = c(.99,1.1),
+        legend.justification = c("right", "top"),
+        legend.box.just = "left",
+        legend.key.size = unit(.5, 'cm'),
+        plot.margin = unit(c(.2,1,1,.2), "cm"))+
+  guides(color = guide_legend(override.aes = list(size=2)))+
+  labs(x="Lake",y=expression(paste("")),title = "Dytiscid larvae",shape="Diet composition")+
+  scale_shape_manual(values=c(25,17,19))+
+  annotation_logticks(sides = "l")+
+  scale_y_log10(breaks=c(0.01,0.1,1,10,100),limits=c(.002,100),
+                labels=scales::number_format(accuracy = 0.01))+
+  geom_hline(yintercept=1,linetype="dashed")
+
+
+
+bmf_fig <- arrangeGrob(zoopplot,snailplot,chirplot,dytplot, nrow=2, ncol=2)
+
+ggsave("bmf_fig.tiff",bmf_fig,height=12,width=16,dpi=300)
+ggsave("bmf_fig.pdf",bmf_fig,height=12,width=16,dpi=400)
